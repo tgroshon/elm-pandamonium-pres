@@ -4,6 +4,10 @@
 
 # Direct Complaints as Follows
 
+Trash
+
+![trash can](https://farm1.staticflickr.com/12/17834156_aa3bc64c96_z.jpg?zz=1)
+
 ---
 
 # Agenda

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Title</title>
+    <title>What is Elm and Why Should I care?</title>
     <meta charset="utf-8">
     <style>
       @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
@@ -13,11 +13,26 @@
         font-family: 'Yanone Kaffeesatz';
         font-weight: normal;
       }
-      h1, h2, h3, p, li {
+      h1, p, li, .remark-slide-number {
         color: white;
+      }
+      h2 {
+        color: whitesmoke;
+      }
+      h3 {
+        color: aquamarine;
       }
       .remark-slide-content {
         background-color: black;
+      }
+      strong {
+        color: #D69090;
+      }
+      em {
+        color: #97B0E8;
+      }
+      .small {
+      width: 200px;
       }
 
       .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
@@ -33,6 +48,8 @@ class: center, middle
 
 # Direct Complaints as Follows
 
+![trash can](https://farm1.staticflickr.com/12/17834156_aa3bc64c96_z.jpg?zz=1)
+
 ---
 
 # Agenda
@@ -47,37 +64,85 @@ class: center, middle
 
 ---
 
-# Goals
+# Introduction
+
+### Goals
 
 1. Apply Elm's good ideas to our daily work
 2. Promote Elm as a development tool
 
----
-
-# Format
+### Format
 
 Some persuasion followed by an Immediate Action (IA)
 
 ---
 
-# Introduction
-
-stuff goes here
-
----
-
 # The Type Analysis Advantage
-## This just in: Static types are in, Dynamic types are out!
+
+### This just in: Static types are in, Dynamic types are out!
 
 - Advantages of Elm's Type System
-  + Catch Simple Errors
-  + Enforce Semantic Versioning
-  + Banishing Nulls
-- I.A.: Flow
+  + Catch Simple **Errors**
+  + **Enforce** Semantic Versioning
+  + Banish **Nulls**
+- _IA: Flow_
 
 ---
 
 # Signals -> Values Over Time
+
+```elm
+map : (a -> b) -> Signal a -> Signal b
+
+filter : (a -> Bool) -> a -> Signal a -> Signal a
+
+merge : Signal a -> Signal a -> Signal a
+
+foldp : (a -> s -> s) -> s -> Signal a -> Signal s
+```
+
+- _Signals_ are **connected to the world**
+- _Signals_ are **infinite**
+- Signal _graphs_ are **static**
+- _Signals_ are **synchronous**
+
+Huh?  You can _not_ delete, create, or unsubscribe from signals at runtime.
+
+---
+
+# Signal Graph
+
+The Signal Graph is like any system of pipes:
+(a) source, (b) branches, and (c) sink.
+
+![Elm signal Diagram](http://elm-lang.org/assets/diagrams/signals.png)
+
+---
+
+# Signal Graph (cont'd)
+
+An Application's signal graph can have multiple sources, branches, and sinks.
+
+Sources:
+```elm
+
+```
+
+Branches:
+
+```elm
+
+```
+Sinks:
+```elm
+-- the signal's value (an element) is rendered to screen
+main : Signal Element
+
+-- Send strings to JavaScript
+port someJavaScriptFn : Signal String
+
+-- Send Tasks to Elm Runtime
+```
 
 ---
 
@@ -85,7 +150,7 @@ stuff goes here
 
 - Tasks
 - Effects
-- I.A.: Promises
+- _IA: Promises_
 
 ---
 
@@ -94,7 +159,7 @@ stuff goes here
 > I would be really sad to see the "monad tutorial" meme spreading to Elm. We
 > can't keep using the same pedagogy and think it'll come out different the
 > N+1 time.
-*- Evan Czaplicki*
+_- Evan Czaplicki_
 
 [http://elm-discuss.narkive.com/6gJ7aPMj/monads-in-elm-tutorial](http://elm-discuss.narkive.com/6gJ7aPMj/monads-in-elm-tutorial)
 
@@ -108,6 +173,12 @@ stuff goes here
 
 # The Elm Architecture
 
+---
+
+# Important Tools
+
+- Node Bindings for Elm Compiler: [https://github.com/rtfeldman/node-elm-compiler](https://github.com/rtfeldman/node-elm-compiler)
+- Webpack Loader for Elm Files: [https://github.com/rtfeldman/elm-webpack-loader](https://github.com/rtfeldman/elm-webpack-loader)
 
     </textarea>
     <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">

@@ -244,36 +244,11 @@ The **Reactive** in Elm _Functional-Reactive Programming_
 
 # Signal Characteristics
 
-- _Signals_ are **connected to the world**
-- _Signals_ are **infinite**
-- Signal _graphs_ are **static**
-- _Signals_ are **synchronous**
-
-Huh?
+- **Synchronous**: FIFO
+- **Infinite & Static**: You **cannot** _delete_, _create_, or _unsubscribe_ from signals at runtime.
 
 ---
 
-# Signal Characteristics
-
-- _Signals_ are **connected to the world**
-- _Signals_ are **infinite**
-- Signal _graphs_ are **static**
-- _Signals_ are **synchronous**
-
-**Synchronous**: FIFO
-
-Infinite & Static: You **cannot** _delete_, _create_, or _unsubscribe_ from signals at runtime.
-
-_Static_ is an artifact of declarative syntax; won't work in imperative language like JavaScript.
-
----
-
-# But Why Signals?
-
-1. Naturally handles _asynchrony_
-1. Naturally model _data over time_ while avoiding shared mutable state
-
----
 # Signal Graph
 
 Your program ends up being a graph of signals.
@@ -310,6 +285,13 @@ Sinks:
 main : Signal Element                 -- element to be rendered to screen
 port someJavaScriptFn : Signal String -- Send strings to JavaScript
 ```
+
+---
+
+# But Why Signals?
+
+1. Naturally handles _asynchrony_
+1. Naturally model _data over time_ while avoiding shared mutable state
 
 ---
 

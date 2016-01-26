@@ -31,6 +31,10 @@
       em {
         color: #97B0E8;
       }
+      a, a:visited {
+        color: #97B0E8;
+        text-decoration: none;
+      }
       .small {
         width: 200px;
       }
@@ -81,6 +85,8 @@ Some **persuasion** followed by an _Immediate Action (IA)_
 
 - Haskell-like syntax
 - Statically Typed
+- Declarative
+- Compile-to-JavaScript
 
 ```elm
 import Graphics.Element exposing (..)
@@ -116,6 +122,11 @@ elm-repl       # A Read-Eval-Print-Loop
 elm-reactor    # Quick-start Watcher/Builder
 elm            # Wrapper around all the tools
 ```
+
+## Other tools
+
+- Webpack Loader: _https://github.com/rtfeldman/elm-webpack-loader_
+- `elm-make` JS Bindings: _https://github.com/rtfeldman/node-elm-compiler_
 
 ---
 
@@ -190,7 +201,7 @@ foo('Hello', 42); // Error:  number ... type is incompatible with ... string
 ```
 
 Babel will strip it out for you:
-  [http://babeljs.io/docs/plugins/transform-flow-strip-types/](http://babeljs.io/docs/plugins/transform-flow-strip-types/)
+  _http://babeljs.io/docs/plugins/transform-flow-strip-types/_
 
 ---
 
@@ -213,7 +224,7 @@ Babel will strip it out for you:
 
 - Discrete values over time
 - Signal Graphs
-- _IA: RxJS_
+- _IA: RxJS, Most.js, Flyd_
 
 ---
 
@@ -224,6 +235,10 @@ type Signal a
 ```
 > A value that changes over time. Every signal is updated at discrete
 > moments in response to events in the world.
+
+So like an EventEmitter?  Almost, and not quite.
+
+The **Reactive** in Elm _Functional-Reactive Programming_
 
 ---
 
@@ -245,15 +260,26 @@ Huh?
 - Signal _graphs_ are **static**
 - _Signals_ are **synchronous**
 
+**Synchronous**: FIFO
+
 Infinite & Static: You **cannot** _delete_, _create_, or _unsubscribe_ from signals at runtime.
 
-Synchronous: FIFO
+_Static_ is an artifact of declarative syntax; won't work in imperative language like JavaScript.
+
+---
+
+# But Why Signals?
+
+1. Naturally handles _asynchrony_
+1. Naturally model _data over time_ while avoiding shared mutable state
 
 ---
 # Signal Graph
 
-The Signal Graph is like any system of pipes:
-(a) sources, (b) branches, and (c) sinks.
+Your program ends up being a graph of signals.
+
+Think of pipes (streams):
+  (a) sources, (b) branches, and (c) sinks.
 
 ![Elm signal Diagram](http://elm-lang.org/assets/diagrams/signals.png)
 
@@ -271,7 +297,7 @@ clicks : Signal ()             --
 dimensions : Signal (Int, Int) -- Window
 ```
 
-Branches:
+Branches (Transforms):
 ```elm
 map : (a -> b) -> Signal a -> Signal b
 filter : (a -> Bool) -> a -> Signal a -> Signal a
@@ -287,36 +313,91 @@ port someJavaScriptFn : Signal String -- Send strings to JavaScript
 
 ---
 
+# IA: FRP Streams in JS
+
+Contenders:
+
+* RxJS (**Biggest**)
+* Bacon.js (_Slowest_)
+* Kefir.js (**Middle**)
+* Most.js (_Fastest_)
+* Flyd (**Smallest**)
+
+I'll discuss _RxJS_, _Most_, and _Flyd_
+
+---
+
 # IA: RxJS
 
-RxJS = Observables + Operators + Schedulers.
-
-1. Represent _asynchronous data streams_ with **Observables** (Sources)
-1. _Query_ observables using our many **operators**           (Branches)
-1. Parameterize _the concurrency_ in the Observables using **Schedulers**
+RxJS implements *Observables*
 
 ```javascript
 /* Get stock data somehow */
-var source = getAsyncStockData();  // Source
+var source = getAsyncStockData()    // Source is an observable
 
-var subscription = source
-  .filter(function (quote) {       // Branches
-    return quote.price > 30;
+source
+  .filter(function (quote) {        // Branches
+    return quote.price > 30
   })
   .map(function (quote) {
-    return quote.price;
+    return quote.price
   })
-  .subscribe(                      // Sink
-    function (price) {
-      console.log('Prices higher than $30: $' + price);
-    },
-    function (err) {
-      console.log('Something went wrong: ' + err.message);
-    });
-
-/* When we're done */
-subscription.dispose();
+  .subscribe(function (price) {     // Sink
+    console.log('Prices higher ' +
+                'than $30: $' +
+                price)
+  })
 ```
+
+Most popular but also the largest file size (around **200kb** minified)
+
+Can choose asynchrony between `setImmediate`, `setTimeout`, `requestAnimationFrame`
+
+---
+
+# IA: Most.js
+
+_Monadic_ Streams
+
+```javascript
+most.from([1, 2, 3, 4])
+  .delay(1000)
+  .filter(function(i) {
+    return i % 2 === 0
+  })
+  .reduce(function(result, y) {
+    return result + y
+  }, 0)
+  .then(function(result) {
+    console.log(result)
+  })
+```
+Super fast and around **50kb** minified, uncompressed
+
+Consuming functions (`reduce`, `forEach`, `observe`) return Promises.
+
+---
+
+# IA: Flyd
+
+Pronounced _flu_ (it's Dutch)
+
+```javascript
+var x = flyd.stream(10) // Create stream with initial value
+var y = flyd.stream(20)
+
+var sum = flyd.combine(function(x, y) {
+  return x() + y() // Calling stream without argument returns last value
+}, [x, y])
+
+flyd.on(function(s) {
+  console.log(s)
+}, sum)
+```
+
+Very Simple. Modeled after Elm Signals.
+
+Mostly just gives low-level composition constructs e.g. `combine`, `merge`, `transduce`
 
 ---
 
@@ -334,7 +415,7 @@ subscription.dispose();
 type Task x a
 ```
 
-> Represents asynchronous effects that return value of type **a** but _may fail_ with value of type **x**. It is useful for stuff like HTTP.
+> Represents asynchronous effects that return value of type **a** but _may fail_ with value of type **x**.
 
 Sound like Promises?  They are even chainable with `andThen`:
 
@@ -370,6 +451,8 @@ getData url =
 # Explained
 
 ```elm
+type Action = NewGif (Maybe String) | ... -- some other action
+
 getData : String -> Effects Action
 getData url =
   Http.get decodeJsonData url
@@ -418,23 +501,6 @@ you can run them in a batch _but only if they **never fail**_.
 
 ---
 
-# Monads?
-
-> I would be really sad to see the "monad tutorial" meme spreading to Elm. We
-> can't keep using the same pedagogy and think it'll come out different the
-> N+1 time.
-_- Evan Czaplicki_
-
-[http://elm-discuss.narkive.com/6gJ7aPMj/monads-in-elm-tutorial](http://elm-discuss.narkive.com/6gJ7aPMj/monads-in-elm-tutorial)
-
----
-
-# Monads?
-
-**Gauche** = _socially awkward_
-
----
-
 # IA: Promises
 
 ```javascript
@@ -450,12 +516,14 @@ What can we learn from Elm?
 **Don't reject promises needlessly**
 
 ```javascript
-new Promise((resolve, reject) => {
-  doAsync((err, result) => {
-    if (err) return resolve({status: 'failed', data: err})
+var p = new Promise(function (resolve, reject) {
+  doAsync(function (err, result) {
+    if (err) {
+      return resolve({status: 'failed', data: err})
+    }
     resolve({status: 'success', data: result})
   })
-});
+})
 ```
 
 ---
@@ -465,15 +533,10 @@ new Promise((resolve, reject) => {
 - Try out Elm
 - Or:
   + Use flow for static type analysis
-  + Use RxJS for FRP goodness
+  + Use a JavaScript FRP Library
   + Use Promises that "never fail"
 
 More realistically, use some combination of the above ;)
-
-## Important Tools
-
-- Webpack Loader for Elm Files: [https://github.com/rtfeldman/elm-webpack-loader](https://github.com/rtfeldman/elm-webpack-loader)
-- Node Bindings for Elm Compiler: [https://github.com/rtfeldman/node-elm-compiler](https://github.com/rtfeldman/node-elm-compiler)
 
     </textarea>
     <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">

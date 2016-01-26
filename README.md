@@ -1,58 +1,353 @@
 # What is Elm and Why Should I Care?
 
+.center[twitter & github: @tgroshon]
+
 ---
 
 # Direct Complaints as Follows
-
-Trash
 
 ![trash can](https://farm1.staticflickr.com/12/17834156_aa3bc64c96_z.jpg?zz=1)
 
 ---
 
-# Agenda
-
-1. Introduction
-1. Details
-  2. Type Analysis Advantages
-  2. Signals -> Values over Time
-  2. Abstracting Away Side-Effects
-  2. The Elm Architecture
-1. Sum-up
-
----
-
-# Goals
+### Goals
 
 1. Apply Elm's good ideas to our daily work
 2. Promote Elm as a development tool
 
+### Agenda
+
+1. Introduction to Elm
+1. Details of How it Works
+  2. Type Analysis Advantages
+  2. Signals -> Values over Time
+  2. Abstracting Away Side-Effects
+1. Sum-up
+
+
+### Format
+
+Some **persuasion** followed by an _Immediate Action (IA)_
+
 ---
 
-# Format
+# Intro: Syntax
 
-Some persuasion followed by an Immediate Action (IA)
+- Haskell-like syntax
+- Statically Typed
+- Declarative
+- Compile-to-JavaScript
+
+```elm
+import Graphics.Element exposing (..)
+import Window
+
+main : Signal Element
+main =
+  Signal.map resizeablePaint Window.dimensions
+
+resizeablePaint : (Int,Int) -> Element
+resizeablePaint (w,h) =
+  fittedImage w h "/imgs/paint.jpg"
+
+-- Types can be ommitted/inferred in most cases but are nice for Doc
+```
+
+Type Aliases
+
+```elm
+type alias Name = String
+type alias Age = Int
+```
 
 ---
 
-# Introduction
+# Intro: Tool-chain
 
-stuff goes here
+Written in Haskell
+```bash
+elm-make       # Compiles Elm to JS
+elm-package    # Package Manager
+elm-repl       # A Read-Eval-Print-Loop
+elm-reactor    # Quick-start Watcher/Builder
+elm            # Wrapper around all the tools
+```
+
+## Other tools
+
+- Webpack Loader: _https://github.com/rtfeldman/elm-webpack-loader_
+- `elm-make` JS Bindings: _https://github.com/rtfeldman/node-elm-compiler_
 
 ---
 
 # The Type Analysis Advantage
-## This just in: Static types are in, Dynamic types are out!
+
+### This just in: Dynamic types are out, Static types are in!
 
 - Advantages of Elm's Type System
-  + Catch Simple Errors
-  + Enforce Semantic Versioning
-  + Banishing Nulls
-- I.A.: Flow
+  + Catch Simple **Errors**
+  + Banish **Nulls**
+  + **Enforce** Semantic Versioning
+- _IA: Flow_
+
+---
+
+# The Simple Errors
+
+Goodbye spelling mistakes and refactoring lapses:
+
+![Elm error messages](http://elm-lang.org/assets/blog/error-messages/0.15.1/naming.png)
+
+---
+
+# Banish Null
+
+> I call it my billion-dollar mistake. It was the invention of the null reference in 1965. 
+_- Tony Hoare (Builder of Algol W)_
+
+No nulls in Elm, Just Maybes:
+
+```elm
+type Maybe a = Just a | Nothing
+```
+
+Allows the compiler to enforce "null-checks" when needed.
+
+---
+
+# Enforcing Semantic Versioning
+
+elm-package will bump versions for you, automatically enforcing these rules:
+
+- all packages start with initial version 1.0.0
+- Versions are incremented based on how the API changes:
+  + PATCH - the API is the same, no risk of breaking code
+  + MINOR - values have been added, existing values are unchanged
+  + MAJOR - existing values have been changed or removed
+
+Even Rust-lang is talking about adding similar checks: https://users.rust-lang.org/t/signature-based-api-comparison/2377
+
+---
+
+
+# IA: Flow
+
+.center[flowtype.org]
+
+```javascript
+/* @flow */
+function foo(x) {
+  return x * 10;
+}
+foo('Hello, world!');  // Error: This type is incompatible with ...: string
+```
+
+```javascript
+/* @flow */
+function foo(x: string, y: number): string {
+  return x.length * y;
+}
+foo('Hello', 42); // Error:  number ... type is incompatible with ... string
+```
+
+Babel will strip it out for you:
+  _http://babeljs.io/docs/plugins/transform-flow-strip-types/_
+
+---
+
+# One Beef with Flow
+
+> In JavaScript, null implicitly converts to all the primitive types; it is also a valid inhabitant of any object type.
+> 
+> In contrast, Flow considers null to be a distinct value that is not part of any other type.
+
+- Let's be Honest: In JavaScript, _all types are nullable_!
+- Requires programmer discipline to be honest about which vars are _not_ Maybe (fewer than we think)
+- Not a great decision for a gradually-typed system over a language with nullable types
+
+## Recommendation 
+**As a habit in flow, mark things as Maybe**
 
 ---
 
 # Signals -> Values Over Time
+
+- Discrete values over time
+- Signal Graphs
+- _IA: RxJS, Most.js, Flyd_
+
+---
+
+# Discrete Values Over Time
+
+```elm
+type Signal a
+```
+> A value that changes over time. Every signal is updated at discrete
+> moments in response to events in the world.
+
+So like an EventEmitter?  Almost, and not quite.
+
+The **Reactive** in Elm _Functional-Reactive Programming_
+
+---
+
+# Signal Characteristics
+
+- _Signals_ are **connected to the world**
+- _Signals_ are **infinite**
+- Signal _graphs_ are **static**
+- _Signals_ are **synchronous**
+
+Huh?
+
+---
+
+# Signal Characteristics
+
+- _Signals_ are **connected to the world**
+- _Signals_ are **infinite**
+- Signal _graphs_ are **static**
+- _Signals_ are **synchronous**
+
+**Synchronous**: FIFO
+
+Infinite & Static: You **cannot** _delete_, _create_, or _unsubscribe_ from signals at runtime.
+
+_Static_ is an artifact of declarative syntax; won't work in imperative language like JavaScript.
+
+---
+
+# But Why Signals?
+
+1. Naturally handles _asynchrony_
+1. Naturally model _data over time_ while avoiding shared mutable state
+
+---
+# Signal Graph
+
+Your program ends up being a graph of signals.
+
+Think of pipes (streams):
+  (a) sources, (b) branches, and (c) sinks.
+
+![Elm signal Diagram](http://elm-lang.org/assets/diagrams/signals.png)
+
+---
+
+# Signal Graph (cont'd)
+
+An Application's signal graph can have multiple sources, branches, and sinks.
+
+Sources:
+```elm
+position : Signal (Int, Int)   -- Mouse
+clicks : Signal ()             --
+
+dimensions : Signal (Int, Int) -- Window
+```
+
+Branches (Transforms):
+```elm
+map : (a -> b) -> Signal a -> Signal b
+filter : (a -> Bool) -> a -> Signal a -> Signal a
+merge : Signal a -> Signal a -> Signal a
+foldp : (a -> s -> s) -> s -> Signal a -> Signal s
+```
+
+Sinks:
+```elm
+main : Signal Element                 -- element to be rendered to screen
+port someJavaScriptFn : Signal String -- Send strings to JavaScript
+```
+
+---
+
+# IA: FRP Streams in JS
+
+Contenders:
+
+* RxJS (**Biggest**)
+* Bacon.js (_Slowest_)
+* Kefir.js (**Middle**)
+* Most.js (_Fastest_)
+* Flyd (**Smallest**)
+
+I'll discuss _RxJS_, _Most_, and _Flyd_
+
+---
+
+# IA: RxJS
+
+RxJS implements *Observables*
+
+```javascript
+/* Get stock data somehow */
+var source = getAsyncStockData()    // Source is an observable
+
+source
+  .filter(function (quote) {        // Branches
+    return quote.price > 30
+  })
+  .map(function (quote) {
+    return quote.price
+  })
+  .subscribe(function (price) {     // Sink
+    console.log('Prices higher ' +
+                'than $30: $' +
+                price)
+  })
+```
+
+Most popular but also the largest file size (around **200kb** minified)
+
+Can choose asynchrony between `setImmediate`, `setTimeout`, `requestAnimationFrame`
+
+---
+
+# IA: Most.js
+
+_Monadic_ Streams
+
+```javascript
+most.from([1, 2, 3, 4])
+  .delay(1000)
+  .filter(function(i) {
+    return i % 2 === 0
+  })
+  .reduce(function(result, y) {
+    return result + y
+  }, 0)
+  .then(function(result) {
+    console.log(result)
+  })
+```
+Super fast and around **50kb** minified, uncompressed
+
+Consuming functions (`reduce`, `forEach`, `observe`) return Promises.
+
+---
+
+# IA: Flyd
+
+Pronounced _flu_ (it's Dutch)
+
+```javascript
+var x = flyd.stream(10) // Create stream with initial value
+var y = flyd.stream(20)
+
+var sum = flyd.combine(function(x, y) {
+  return x() + y() // Calling stream without argument returns last value
+}, [x, y])
+
+flyd.on(function(s) {
+  console.log(s)
+}, sum)
+```
+
+Very Simple. Modeled after Elm Signals.
+
+Mostly just gives low-level composition constructs e.g. `combine`, `merge`, `transduce`
 
 ---
 
@@ -60,23 +355,135 @@ stuff goes here
 
 - Tasks
 - Effects
-- I.A.: Promises
+- _IA: Promises_
 
 ---
 
-# Monads?
+# Tasks
 
-> I would be really sad to see the "monad tutorial" meme spreading to Elm. We
-> can't keep using the same pedagogy and think it'll come out different the
-> N+1 time.
-*- Evan Czaplicki*
+```elm
+type Task x a
+```
 
-[http://elm-discuss.narkive.com/6gJ7aPMj/monads-in-elm-tutorial](http://elm-discuss.narkive.com/6gJ7aPMj/monads-in-elm-tutorial)
+> Represents asynchronous effects that return value of type **a** but _may fail_ with value of type **x**.
+
+Sound like Promises?  They are even chainable with `andThen`:
+
+```elm
+logCurrentTime : Task x ()
+logCurrentTime =
+  getCurrentTimeTask `andThen` consoleLogTask
+```
+
 ---
 
-# Tasks FTW!
+# Effects
 
+```elm
+type Effects a
+```
+
+> The Effects type is essentially a data structure holding a bunch of independent tasks that will get run at some later point. 
+
+Example making an HTTP request for jsonData:
+
+```elm
+getData : String -> Effects Action
+getData url =
+  Http.get decodeJsonData url
+    |> Task.toMaybe
+    |> Task.map NewGif
+    |> Effects.task
+```
 
 ---
 
-# The Elm Architecture
+# Explained
+
+```elm
+type Action = NewGif (Maybe String) | ... -- some other action
+
+getData : String -> Effects Action
+getData url =
+  Http.get decodeJsonData url
+    |> Task.toMaybe
+    |> Task.map NewGif
+    |> Effects.task
+```
+
+- **`Task.toMaybe`** drops the error message and returns a `Maybe String` type.
+- **`Task.map NewGif`** wraps the `Maybe String` in a `NewGif` action.
+- **`Effects.task`** turn this task into an `Effects` type.
+
+---
+
+# Task, Maybe, Effects Oh My!
+
+Effects wrap Tasks that are guaranteed to "not fail" ... meaning they have an _error handler_.
+
+**`Task.toMaybe`** and **`Task.toResult`** are _convenience functions_ to move errors into
+the success handler by returning a new task.
+
+```elm
+toMaybe : Task x a -> Task y (Maybe a)
+toMaybe task =
+  map Just task `onError` (\_ -> succeed Nothing)
+
+toResult : Task x a -> Task y (Result x a)
+toResult task =
+  map Ok task `onError` (\msg -> succeed (Err msg))
+```
+
+---
+
+# Why are Effects useful?
+
+Thoughts?
+
+---
+
+# Why are Effects useful?
+
+My theory:  to make the `start-app` package better!
+
+If you can collect the tasks for all your components that will be rendered,
+you can run them in a batch _but only if they **never fail**_.
+
+---
+
+# IA: Promises
+
+```javascript
+var p = new Promise(function(resolve, reject) {
+  // something async happens
+});
+
+p.then(successHandlerFn, failureHandlerFn);
+```
+
+What can we learn from Elm?
+
+**Don't reject promises needlessly**
+
+```javascript
+var p = new Promise(function (resolve, reject) {
+  doAsync(function (err, result) {
+    if (err) {
+      return resolve({status: 'failed', data: err})
+    }
+    resolve({status: 'success', data: result})
+  })
+})
+```
+
+---
+
+# Sum-up
+
+- Try out Elm
+- Or:
+  + Use flow for static type analysis
+  + Use a JavaScript FRP Library
+  + Use Promises that "never fail"
+
+More realistically, use some combination of the above ;)
